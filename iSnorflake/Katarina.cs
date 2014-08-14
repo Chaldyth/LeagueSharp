@@ -24,6 +24,7 @@ namespace Katarina
         public static Spell W;
         public static Spell E;
         public static Spell R;
+        public static Items.Item DFG;
 
         //Menu
         public static Menu Config;
@@ -43,6 +44,7 @@ namespace Katarina
            W = new Spell(SpellSlot.W, 375);
            E = new Spell(SpellSlot.E, 700);
            R = new Spell(SpellSlot.R, 550);
+           DFG = Utility.Map.GetMap() == Utility.Map.MapType.TwistedTreeline || Utility.Map.GetMap() == Utility.Map.MapType.CrystalScar ? new Items.Item(3188, 750) : new Items.Item(3128, 750);
            Game.PrintChat(ChampionName + " Loaded! By iSnorflake");
            SpellList.Add(Q);
            SpellList.Add(W);
@@ -53,13 +55,13 @@ namespace Katarina
 
            //Orbwalker submenu
            Config.AddSubMenu(new Menu("Orbwalking", "Orbwalking"));
-
+           Orbwalker = new Orbwalking.Orbwalker(Config.SubMenu("Orbwalking"));
            //Add the targer selector to the menu.
            var targetSelectorMenu = new Menu("Target Selector", "Target Selector");
            SimpleTs.AddToMenu(targetSelectorMenu);
            Config.AddSubMenu(targetSelectorMenu);
 
-           Orbwalker = new Orbwalking.Orbwalker(Config.SubMenu("Orbwalking"));
+          
 
            //Combo menu
            Config.AddSubMenu(new Menu("Combo", "Combo"));
@@ -67,10 +69,7 @@ namespace Katarina
            Config.SubMenu("Combo").AddItem(new MenuItem("UseWCombo", "Use W").SetValue(true));
            Config.SubMenu("Combo").AddItem(new MenuItem("UseECombo", "Use E").SetValue(true));
            Config.SubMenu("Combo").AddItem(new MenuItem("UseRCombo", "Use R").SetValue(true));
-           Config.SubMenu("Combo")
-               .AddItem(
-               new MenuItem("ComboActive", "Combo!").SetValue(
-                    new KeyBind(Config.Item("Orbwalk").GetValue<KeyBind>().Key, KeyBindType.Press)));
+           Config.SubMenu("Combo").AddItem(new MenuItem("ComboActive", "Combo!").SetValue(new KeyBind(32, KeyBindType.Press)));
 
            // Misc
            Config.AddSubMenu(new Menu("Misc", "Misc"));
@@ -80,7 +79,7 @@ namespace Katarina
            Config.AddSubMenu(new Menu("Drawings", "Drawings"));
            Config.SubMenu("Drawings").AddItem(new MenuItem("QRange", "Q Range").SetValue(new Circle(true, Color.FromArgb(150, Color.DodgerBlue))));
            Config.SubMenu("Drawings").AddItem(new MenuItem("ERange", "E Range").SetValue(new Circle(true, Color.FromArgb(150, Color.Red))));
-
+           Config.AddToMainMenu();
            //Add the events we are going to use
            Game.OnGameUpdate += Game_OnGameUpdate;
            Drawing.OnDraw += Drawing_OnDraw;
@@ -91,30 +90,39 @@ namespace Katarina
         private static void Combo()
        {
            Orbwalker.SetAttacks(true);
-           var qTarget = SimpleTs.GetTarget(Q.Range, SimpleTs.DamageType.Magical);
-           var wTarget = SimpleTs.GetTarget(W.Range, SimpleTs.DamageType.Magical);
-           var eTarget = SimpleTs.GetTarget(E.Range, SimpleTs.DamageType.Magical);
-           var rTarget = SimpleTs.GetTarget(R.Range, SimpleTs.DamageType.Magical);
-           bool useQ = Config.Item("UseQCombo").GetValue<bool>();
-           bool useW = Config.Item("UseWCombo").GetValue<bool>();
-           bool useE = Config.Item("UseECombo").GetValue<bool>();
-           bool useR = Config.Item("UseRCombo").GetValue<bool>();
+           var target = SimpleTs.GetTarget(E.Range, SimpleTs.DamageType.Magical);
+           if (target == null) return;
 
-           if (qTarget != null && useQ && Q.IsReady())
+           if ((GetDamage(target) > target.Health))
            {
-               Q.Cast(qTarget);
+               if (ObjectManager.Player.Distance(target) < E.Range && DFG.IsReady())
+                   DFG.Cast(target);
+
+               if (ObjectManager.Player.Distance(target) < Q.Range && Q.IsReady())
+                   Q.CastOnUnit(target, true);
+
+               if (ObjectManager.Player.Distance(target) < E.Range && E.IsReady())
+                   E.CastOnUnit(target, true);
+
+               if (ObjectManager.Player.Distance(target) < W.Range && W.IsReady())
+                   W.Cast();
+
+               if (ObjectManager.Player.Distance(target) < R.Range && R.IsReady())
+                   R.Cast();
+
+
            }
-           if (wTarget != null && useW && W.IsReady())
+           else if (!(GetDamage(target) > target.Health))
            {
-               W.Cast(wTarget);
-           }
-           if (eTarget != null && useE && E.IsReady())
-           {
-               E.Cast(eTarget);
-           }
-           if (rTarget != null && useR && R.IsReady())
-           {
-               R.Cast(rTarget);
+               if (ObjectManager.Player.Distance(target) < Q.Range && Q.IsReady())
+                   Q.CastOnUnit(target, true);
+
+               if (Config.Item("ComboActive").GetValue<KeyBind>().Active &&
+                   ObjectManager.Player.Distance(target) < E.Range && E.IsReady())
+                   E.CastOnUnit(target, true);
+
+               if (ObjectManager.Player.Distance(target) < W.Range && W.IsReady())
+                   W.Cast();
            }
        }
         private static void Game_OnGameUpdate(EventArgs args)
@@ -147,6 +155,14 @@ namespace Katarina
                Q.Cast();
            }
        }
-    
+       private static double GetDamage(Obj_AI_Base unit)
+       {
+           double damage = 0;
+           if (Q.IsReady()) damage += DamageLib.getDmg(unit, DamageLib.SpellType.Q);
+           if (W.IsReady()) damage += DamageLib.getDmg(unit, DamageLib.SpellType.W);
+           if (E.IsReady()) damage += DamageLib.getDmg(unit, DamageLib.SpellType.E);
+           if (R.IsReady()) damage += DamageLib.getDmg(unit, DamageLib.SpellType.R, DamageLib.StageType.FirstDamage) * 7;
+           return damage * (DFG.IsReady() ? 1.2f : 1);
+       }
     }
 }
