@@ -170,9 +170,10 @@ namespace Katarina
         {
             foreach (Obj_AI_Hero i in ObjectManager.Get<Obj_AI_Hero>())
              {
-                 if (i.IsEnemy && i.IsVisible)
+                 if (i.IsEnemy && i.IsVisible && Vector3.Distance(ObjectManager.Player.ServerPosition, i.ServerPosition) <= 550)
                  {
-                }
+                     return true;
+                 }
              }
             return false;
         }
