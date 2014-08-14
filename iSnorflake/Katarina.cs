@@ -130,6 +130,8 @@ namespace Katarina
             if (Player.IsDead) return;
             if(isEnemyInRange())
                 if (Interrupter.IsChannelingImportantSpell(ObjectManager.Player)) return;
+            if(Interrupter.IsChannelingImportantSpell(ObjectManager.Player) && !isEnemyInRange()) 
+                ObjectManager.Player.IssueOrder(GameObjectOrder.MoveTo, (ObjectManager.Player.ServerPosition + (new Vector3(5, 5, 0))));
             Orbwalker.SetAttacks(true);
             Orbwalker.SetMovement(true);
             var useQKS = Config.Item("KillstealQ").GetValue<bool>() && Q.IsReady();
@@ -170,13 +172,13 @@ namespace Katarina
         {
             foreach (Obj_AI_Hero target in ObjectManager.Get<Obj_AI_Hero>())
              {
-                 if (target.Health > 1 && target.IsEnemy && target.IsVisible && Vector3.Distance(ObjectManager.Player.ServerPosition, target.ServerPosition) <= 550)
+                 if (target.IsEnemy && target.IsVisible && Geometry.Distance3D(target, ObjectManager.Player) <= 550)
                  {
+                     Game.PrintChat("FKN LOL");
                      return true;
                  }
                  else
                  {
-                     
                      return false;
                      
                  }
