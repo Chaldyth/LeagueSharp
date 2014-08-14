@@ -78,7 +78,7 @@ namespace Katarina
             // Drawings
             Config.AddSubMenu(new Menu("Drawings", "Drawings"));
             Config.SubMenu("Drawings").AddItem(new MenuItem("QRange", "Q Range").SetValue(new Circle(true, Color.FromArgb(150, Color.DodgerBlue))));
-            Config.SubMenu("Drawings").AddItem(new MenuItem("ERange", "E Range").SetValue(new Circle(true, Color.FromArgb(150, Color.Red))));
+            Config.SubMenu("Drawings").AddItem(new MenuItem("ERange", "E Range").SetValue(new Circle(true, Color.FromArgb(150, Color.DodgerBlue))));
             Config.AddToMainMenu();
             //Add the events we are going to use
             Game.OnGameUpdate += Game_OnGameUpdate;
@@ -168,11 +168,17 @@ namespace Katarina
         }
         private static bool isEnemyInRange()
         {
-            foreach (Obj_AI_Hero i in ObjectManager.Get<Obj_AI_Hero>())
+            foreach (Obj_AI_Hero target in ObjectManager.Get<Obj_AI_Hero>())
              {
-                 if (i.IsEnemy && i.IsVisible && Vector3.Distance(ObjectManager.Player.ServerPosition, i.ServerPosition) <= 550)
+                 if (target.Health > 1 && target.IsEnemy && target.IsVisible && Vector3.Distance(ObjectManager.Player.ServerPosition, target.ServerPosition) <= 550)
                  {
                      return true;
+                 }
+                 else
+                 {
+                     
+                     return false;
+                     
                  }
              }
             return false;
