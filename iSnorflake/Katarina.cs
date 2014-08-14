@@ -172,7 +172,7 @@ namespace Katarina
         {
             foreach (Obj_AI_Hero target in ObjectManager.Get<Obj_AI_Hero>())
              {
-                 if (target.IsEnemy && target.IsVisible && Geometry.Distance3D(target, ObjectManager.Player) <= 550)
+                 if (target.IsEnemy && target.IsValidTarget && Geometry.Distance3D(target, ObjectManager.Player) <= 550)
                  {
                      Game.PrintChat("FKN LOL");
                      return true;
