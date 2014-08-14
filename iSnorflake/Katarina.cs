@@ -12,7 +12,7 @@ namespace Katarina
 {
     internal class Program
     {
-        public const string ChampionName = "Katarina";
+        public static string ChampionName = "Katarina";
 
         //Orbwalker instance
         public static Orbwalking.Orbwalker Orbwalker;
@@ -34,13 +34,16 @@ namespace Katarina
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
         }
 
-       static void Game_OnGameLoad(EventArgs args)
+      private static void Game_OnGameLoad(EventArgs args)
        {
+           
            Player = ObjectManager.Player;
+           if (Player.BaseSkinName != ChampionName) return;
            Q = new Spell(SpellSlot.Q, 675);
            W = new Spell(SpellSlot.W, 375);
            E = new Spell(SpellSlot.E, 700);
            R = new Spell(SpellSlot.R, 550);
+           Game.PrintChat(ChampionName + " Loaded! By iSnorflake");
            SpellList.Add(Q);
            SpellList.Add(W);
            SpellList.Add(E);
@@ -60,10 +63,10 @@ namespace Katarina
 
            //Combo menu
            Config.AddSubMenu(new Menu("Combo", "Combo"));
-           Config.SubMenu("Config").AddItem(new MenuItem("UseQCombo", "Use Q").SetValue(true));
-           Config.SubMenu("Config").AddItem(new MenuItem("UseWCombo", "Use W").SetValue(true));
-           Config.SubMenu("Config").AddItem(new MenuItem("UseECombo", "Use E").SetValue(true));
-           Config.SubMenu("Config").AddItem(new MenuItem("UseRCombo", "Use R").SetValue(true));
+           Config.SubMenu("Combo").AddItem(new MenuItem("UseQCombo", "Use Q").SetValue(true));
+           Config.SubMenu("Combo").AddItem(new MenuItem("UseWCombo", "Use W").SetValue(true));
+           Config.SubMenu("Combo").AddItem(new MenuItem("UseECombo", "Use E").SetValue(true));
+           Config.SubMenu("Combo").AddItem(new MenuItem("UseRCombo", "Use R").SetValue(true));
            Config.SubMenu("Combo")
                .AddItem(
                new MenuItem("ComboActive", "Combo!").SetValue(
@@ -81,7 +84,7 @@ namespace Katarina
            //Add the events we are going to use
            Game.OnGameUpdate += Game_OnGameUpdate;
            Drawing.OnDraw += Drawing_OnDraw;
-           Game.PrintChat(ChampionName + " Loaded! By iSnorflake");
+        
 
           
        }
@@ -114,7 +117,7 @@ namespace Katarina
                R.Cast(rTarget);
            }
        }
-        static void Game_OnGameUpdate(EventArgs args)
+        private static void Game_OnGameUpdate(EventArgs args)
         {
             if (Player.IsDead) return;
             Orbwalker.SetAttacks(true);
@@ -127,7 +130,7 @@ namespace Katarina
             if (useQKS)
                 Killsteal();
         }
-       static void Drawing_OnDraw(EventArgs args)
+       private static void Drawing_OnDraw(EventArgs args)
        {
            foreach (var spell in SpellList)
            {
