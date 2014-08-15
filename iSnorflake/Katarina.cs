@@ -45,7 +45,7 @@ namespace Katarina
             E = new Spell(SpellSlot.E, 700);
             R = new Spell(SpellSlot.R, 550);
             DFG = Utility.Map.GetMap() == Utility.Map.MapType.TwistedTreeline || Utility.Map.GetMap() == Utility.Map.MapType.CrystalScar ? new Items.Item(3188, 750) : new Items.Item(3128, 750);
-            Game.PrintChat(ChampionName + " Loaded! By iSnorflake");
+            Game.PrintChat(ChampionName + " Loaded! By iSnorflake V2");
             SpellList.Add(Q);
             SpellList.Add(W);
             SpellList.Add(E);
@@ -78,7 +78,7 @@ namespace Katarina
             // Drawings
             Config.AddSubMenu(new Menu("Drawings", "Drawings"));
             Config.SubMenu("Drawings").AddItem(new MenuItem("QRange", "Q Range").SetValue(new Circle(true, Color.FromArgb(150, Color.DodgerBlue))));
-            Config.SubMenu("Drawings").AddItem(new MenuItem("ERange", "E Range").SetValue(new Circle(true, Color.FromArgb(150, Color.DodgerBlue))));
+           // Config.SubMenu("Drawings").AddItem(new MenuItem("ERange", "E Range").SetValue(new Circle(true, Color.FromArgb(150, Color.DodgerBlue))));
             Config.AddToMainMenu();
             //Add the events we are going to use
             Game.OnGameUpdate += Game_OnGameUpdate;
@@ -86,6 +86,26 @@ namespace Katarina
 
 
 
+        }
+
+        private static void Game_OnGameUpdate(EventArgs args)
+        {
+            if (Player.IsDead) return;
+            if(isEnemyInRange()) // If an enemy is in range and im ultimating - dont cancel the ult before their dead
+                if (Interrupter.IsChannelingImportantSpell(ObjectManager.Player)) return;
+            if (!isEnemyInRange() && Interrupter.IsChannelingImportantSpell(ObjectManager.Player)) // If the ult isnt hitting anyone
+            {
+                ObjectManager.Player.IssueOrder(GameObjectOrder.MoveTo, ObjectManager.Player); // Cancels ult
+            }
+            Orbwalker.SetAttacks(true);
+            Orbwalker.SetMovement(true);
+            var useQKS = Config.Item("KillstealQ").GetValue<bool>() && Q.IsReady();
+            if (Config.Item("ComboActive").GetValue<KeyBind>().Active)
+            {
+                Combo();
+            }
+            if (useQKS)
+                Killsteal();
         }
         private static void Combo()
         {
@@ -125,23 +145,6 @@ namespace Katarina
                     W.Cast();
             }
         }
-        private static void Game_OnGameUpdate(EventArgs args)
-        {
-            if (Player.IsDead) return;
-            if(isEnemyInRange())
-                if (Interrupter.IsChannelingImportantSpell(ObjectManager.Player)) return;
-            if(Interrupter.IsChannelingImportantSpell(ObjectManager.Player) && !isEnemyInRange()) 
-                ObjectManager.Player.IssueOrder(GameObjectOrder.MoveTo, (ObjectManager.Player.ServerPosition + (new Vector3(5, 5, 0))));
-            Orbwalker.SetAttacks(true);
-            Orbwalker.SetMovement(true);
-            var useQKS = Config.Item("KillstealQ").GetValue<bool>() && Q.IsReady();
-            if (Config.Item("ComboActive").GetValue<KeyBind>().Active)
-            {
-                Combo();
-            }
-            if (useQKS)
-                Killsteal();
-        }
         private static void Drawing_OnDraw(EventArgs args)
         {
             foreach (var spell in SpellList)
@@ -168,22 +171,11 @@ namespace Katarina
             if (R.IsReady()) damage += DamageLib.getDmg(unit, DamageLib.SpellType.R, DamageLib.StageType.FirstDamage) * 7;
             return damage * (DFG.IsReady() ? 1.2f : 1);
         }
-        private static bool isEnemyInRange()
+        private static bool isEnemyInRange() // Checks if an enemy is in range of my ultimate.
         {
-            foreach (Obj_AI_Hero target in ObjectManager.Get<Obj_AI_Hero>())
-             {
-                 if (target.IsEnemy && target.IsValidTarget && Geometry.Distance3D(target, ObjectManager.Player) <= 550)
-                 {
-                     Game.PrintChat("FKN LOL");
-                     return true;
-                 }
-                 else
-                 {
-                     return false;
-                     
-                 }
-             }
-            return false;
+            var target = SimpleTs.GetTarget(R.Range, SimpleTs.DamageType.Magical);
+            if (target == null) return false;
+            return true;
         }
     }
 }
