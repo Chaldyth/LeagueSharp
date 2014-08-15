@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 using LeagueSharp;
 using LeagueSharp.Common;
+using System.Drawing;
 using SharpDX;
 using Color = System.Drawing.Color;
 
@@ -19,7 +21,6 @@ namespace Katarina
 
         //Spells
         public static List<Spell> SpellList = new List<Spell>();
-
         public static Spell Q;
         public static Spell W;
         public static Spell E;
@@ -74,11 +75,12 @@ namespace Katarina
             // Misc
             Config.AddSubMenu(new Menu("Misc", "Misc"));
             Config.SubMenu("Misc").AddItem(new MenuItem("KillstealQ", "Killsteal with Q").SetValue(true));
+            Config.SubMenu("Misc").AddItem(new MenuItem("Escape", "Escape").SetValue(new KeyBind("G".ToCharArray()[0], KeyBindType.Press)));
 
             // Drawings
             Config.AddSubMenu(new Menu("Drawings", "Drawings"));
             Config.SubMenu("Drawings").AddItem(new MenuItem("QRange", "Q Range").SetValue(new Circle(true, Color.FromArgb(150, Color.DodgerBlue))));
-           // Config.SubMenu("Drawings").AddItem(new MenuItem("ERange", "E Range").SetValue(new Circle(true, Color.FromArgb(150, Color.DodgerBlue))));
+            // Config.SubMenu("Drawings").AddItem(new MenuItem("ERange", "E Range").SetValue(new Circle(true, Color.FromArgb(150, Color.DodgerBlue))));
             Config.AddToMainMenu();
             //Add the events we are going to use
             Game.OnGameUpdate += Game_OnGameUpdate;
@@ -91,7 +93,7 @@ namespace Katarina
         private static void Game_OnGameUpdate(EventArgs args)
         {
             if (Player.IsDead) return;
-            if(isEnemyInRange()) // If an enemy is in range and im ultimating - dont cancel the ult before their dead
+            if (isEnemyInRange()) // If an enemy is in range and im ultimating - dont cancel the ult before their dead
                 if (Interrupter.IsChannelingImportantSpell(ObjectManager.Player)) return;
             if (!isEnemyInRange() && Interrupter.IsChannelingImportantSpell(ObjectManager.Player)) // If the ult isnt hitting anyone
             {
@@ -106,6 +108,7 @@ namespace Katarina
             }
             if (useQKS)
                 Killsteal();
+            escape();
         }
         private static void Combo()
         {
@@ -154,7 +157,7 @@ namespace Katarina
                     Utility.DrawCircle(Player.Position, spell.Range, menuItem.Color);
             }
         }
-        private static void Killsteal()
+        private static void Killsteal() // Creds to TC-Crew
         {
             foreach (var hero in ObjectManager.Get<Obj_AI_Hero>().Where(hero => hero.IsValidTarget(Q.Range)))
             {
@@ -162,7 +165,26 @@ namespace Katarina
                     Q.Cast();
             }
         }
-        private static double GetDamage(Obj_AI_Base unit)
+        private static void escape()
+        {
+            if (Config.Item("Escape").GetValue<KeyBind>().Active)
+            {
+                ObjectManager.Player.IssueOrder(GameObjectOrder.MoveTo,Game.CursorPos);
+                if (E.IsReady()) { 
+                foreach (Obj_AI_Base esc in ObjectManager.Get<Obj_AI_Base>())
+                {
+                    if (esc.IsAlly && esc.Distance(ObjectManager.Player) <= E.Range && esc != null && Vector2.Distance(Game.CursorPos.To2D(), esc.ServerPosition.To2D()) <= 100)
+                    {
+
+                        E.CastOnUnit(esc);
+
+                    }
+
+                }
+            }
+            }
+        }
+        private static double GetDamage(Obj_AI_Base unit) // Creds to TC-Crew
         {
             double damage = 0;
             if (Q.IsReady()) damage += DamageLib.getDmg(unit, DamageLib.SpellType.Q);
@@ -177,5 +199,21 @@ namespace Katarina
             if (target == null) return false;
             return true;
         }
+        public static int getJumpWardId()
+        {
+            int[] wardIds = { 3340, 3350, 3205, 3207, 2049, 2045, 2044, 3361, 3154, 3362, 3160, 2043 };
+            foreach (int id in wardIds)
+            {
+                if (Items.HasItem(id) && Items.CanUseItem(id))
+                    return id;
+            }
+            return -1;
+        }
+
+        public static void moveTo(Vector2 Pos)
+        {
+            Player.IssueOrder(GameObjectOrder.MoveTo, Pos.To3D());
+        }
+
     }
 }
