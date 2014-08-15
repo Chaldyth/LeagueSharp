@@ -72,6 +72,20 @@ namespace Katarina
             Config.SubMenu("Combo").AddItem(new MenuItem("UseRCombo", "Use R").SetValue(true));
             Config.SubMenu("Combo").AddItem(new MenuItem("ComboActive", "Combo!").SetValue(new KeyBind(32, KeyBindType.Press)));
 
+            Config.AddSubMenu(new Menu("Farm", "Farm")); // creds tc-crew
+            Config.SubMenu("Farm")
+                .AddItem(
+                    new MenuItem("UseQFarm", "Use Q").SetValue(
+                        true));
+            Config.SubMenu("Farm")
+                .AddItem(
+                    new MenuItem("UseWFarm", "Use W").SetValue(
+                        true));
+            Config.SubMenu("Farm")
+                .AddItem(
+                    new MenuItem("FreezeActive", "Freeze!").SetValue(
+                        new KeyBind("C".ToCharArray()[0], KeyBindType.Press)));
+
             // Misc
             Config.AddSubMenu(new Menu("Misc", "Misc"));
             Config.SubMenu("Misc").AddItem(new MenuItem("KillstealQ", "Killsteal with Q").SetValue(true));
@@ -108,7 +122,37 @@ namespace Katarina
             }
             if (useQKS)
                 Killsteal();
+            if (Config.Item("FreezeActive").GetValue<KeyBind>().Active)
+                Farm();
             escape();
+        }
+        private static void Farm()
+        {
+            if (!Orbwalking.CanMove(40)) return;
+            var allMinions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range);
+            var useQ = Config.Item("UseQFarm").GetValue<bool>();
+            var useW = Config.Item("UseWFarm").GetValue<bool>();
+            
+            if (useQ && Q.IsReady())
+            {
+                foreach (var minion in allMinions.Where(minion => minion.IsValidTarget() && HealthPrediction.GetHealthPrediction(minion, (int)(ObjectManager.Player.Distance(minion) * 1000 / 1400))
+                < 0.75 * DamageLib.getDmg(minion, DamageLib.SpellType.Q, DamageLib.StageType.FirstDamage)))
+                {
+                    if (Vector3.Distance(minion.ServerPosition, ObjectManager.Player.ServerPosition) > Orbwalking.GetRealAutoAttackRange(ObjectManager.Player))
+                    {
+                        Q.Cast(minion);
+                        return;
+                    }
+                }
+            }
+            else if (useW && W.IsReady())
+            {
+                if (!allMinions.Any(minion => minion.IsValidTarget(W.Range) && minion.Health < 0.75 * DamageLib.getDmg(minion, DamageLib.SpellType.W))) return;
+                
+                    W.Cast();
+                    return;
+               
+            }
         }
         private static void Combo()
         {
