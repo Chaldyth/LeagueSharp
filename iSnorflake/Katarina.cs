@@ -94,6 +94,8 @@ namespace Katarina
             // Drawings
             Config.AddSubMenu(new Menu("Drawings", "Drawings"));
             Config.SubMenu("Drawings").AddItem(new MenuItem("QRange", "Q Range").SetValue(new Circle(true, Color.FromArgb(150, Color.DodgerBlue))));
+            Config.AddSubMenu(new Menu("Exploits", "Exploits"));
+            Config.SubMenu("Exploits").AddItem(new MenuItem("QNFE", "Q No-Face").SetValue(true));
             // Config.SubMenu("Drawings").AddItem(new MenuItem("ERange", "E Range").SetValue(new Circle(true, Color.FromArgb(150, Color.DodgerBlue))));
             Config.AddToMainMenu();
             //Add the events we are going to use
@@ -140,7 +142,10 @@ namespace Katarina
                 {
                     if (Vector3.Distance(minion.ServerPosition, ObjectManager.Player.ServerPosition) > Orbwalking.GetRealAutoAttackRange(ObjectManager.Player))
                     {
-                        Q.Cast(minion);
+                        if (!Config.Item("QNFE").GetValue<bool>())
+                            Q.CastOnUnit(minion, true);
+                        else
+                            Packet.C2S.Cast.Encoded(new Packet.C2S.Cast.Struct(minion.NetworkId, SpellSlot.Q)).Send(); // Creds to DETUKS - Taught me how to do it. iMeh too for the starting code.
                         return;
                     }
                 }
@@ -166,7 +171,12 @@ namespace Katarina
                     DFG.Cast(target);
 
                 if (ObjectManager.Player.Distance(target) < Q.Range && Q.IsReady())
+                {
+                    if(!Config.Item("QNFE").GetValue<bool>())
                     Q.CastOnUnit(target, true);
+                    else
+                        Packet.C2S.Cast.Encoded(new Packet.C2S.Cast.Struct(target.NetworkId, SpellSlot.Q)).Send(); // Creds to DETUKS - Taught me how to do it. iMeh too for the starting code.
+                }
 
                 if (ObjectManager.Player.Distance(target) < E.Range && E.IsReady() && !Q.IsReady())
                     E.CastOnUnit(target, true);
@@ -199,6 +209,8 @@ namespace Katarina
                 var menuItem = Config.Item(spell.Slot + "Range").GetValue<Circle>();
                 if (menuItem.Active)
                     Utility.DrawCircle(Player.Position, spell.Range, menuItem.Color);
+                // Drawing.DrawText(playerPos[0] - 65, playerPos[1] + 20, drawUlt.Color, "Hit R To kill " + UltTarget + "!");
+                
             }
         }
         private static void Killsteal() // Creds to TC-Crew
@@ -206,7 +218,12 @@ namespace Katarina
             foreach (var hero in ObjectManager.Get<Obj_AI_Hero>().Where(hero => hero.IsValidTarget(Q.Range)))
             {
                 if (Q.IsReady() && hero.Distance(ObjectManager.Player) <= Q.Range && DamageLib.getDmg(hero, DamageLib.SpellType.Q) >= hero.Health)
-                    Q.Cast();
+                {
+                    if (!Config.Item("QNFE").GetValue<bool>())
+                        Q.CastOnUnit(hero, true);
+                    else
+                        Packet.C2S.Cast.Encoded(new Packet.C2S.Cast.Struct(hero.NetworkId, SpellSlot.Q)).Send(); // Creds to DETUKS - Taught me how to do it. iMeh too for the starting code.
+                }
             }
         }
         private static void escape()
@@ -223,7 +240,7 @@ namespace Katarina
                         E.CastOnUnit(esc);
 
                     }
-
+                 
                 }
             }
             }
@@ -243,21 +260,7 @@ namespace Katarina
             if (target == null) return false;
             return true;
         }
-        public static int getJumpWardId()
-        {
-            int[] wardIds = { 3340, 3350, 3205, 3207, 2049, 2045, 2044, 3361, 3154, 3362, 3160, 2043 };
-            foreach (int id in wardIds)
-            {
-                if (Items.HasItem(id) && Items.CanUseItem(id))
-                    return id;
-            }
-            return -1;
-        }
 
-        public static void moveTo(Vector2 Pos)
-        {
-            Player.IssueOrder(GameObjectOrder.MoveTo, Pos.To3D());
-        }
 
     }
 }
