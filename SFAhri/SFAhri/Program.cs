@@ -1,4 +1,5 @@
-﻿using System;
+﻿#region References
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,11 +10,12 @@ using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
 using Color = System.Drawing.Color;
-
+#endregion
 namespace SFAhri
 {
     class Program
     {
+        #region Declares
         public static string Name = "Ahri";
         public static Orbwalking.Orbwalker Orbwalker;
         public static Obj_AI_Base Player = ObjectManager.Player;
@@ -21,11 +23,14 @@ namespace SFAhri
         public static Items.Item DFG;
 
         public static Menu SF;
+        
         static void Main(string[] args)
         {
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
         }
+        #endregion
 
+        #region OnGameLoad
         static void Game_OnGameLoad(EventArgs args)
         {
             if (Player.BaseSkinName != Name) return;
@@ -61,22 +66,29 @@ namespace SFAhri
 
 
         }
+#endregion
 
+        #region OnGameUpdate
         static void Game_OnGameUpdate(EventArgs args)
         {
             if (SF.Item("ComboActive").GetValue<KeyBind>().Active) {
                 Combo();
             }
         }
+        #endregion
 
+        #region OnDraw
         static void Drawing_OnDraw(EventArgs args)
         {
             
         }
+        #endregion
+
+        #region Combo
         public static void Combo()
         {
             var target = SimpleTs.GetTarget(E.Range, SimpleTs.DamageType.Magical);
-            if (target != null) return;
+            if (target == null) return;
             
                 if (target.IsValidTarget(DFG.Range) && DFG.IsReady())
                     DFG.Cast(target);
@@ -113,6 +125,9 @@ namespace SFAhri
                 }
                 
             }
+        #endregion
+
+        #region GetDamage
         private static double GetDamage(Obj_AI_Base unit) // Credit to TC-Crew and PQMailer for the base of this 
         {
             double damage = 0;
@@ -122,6 +137,8 @@ namespace SFAhri
             return damage * (DFG.IsReady() ? 1.2f : 1);
 
         }
+        #endregion
+
     }
        
 }
