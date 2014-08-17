@@ -100,14 +100,16 @@ namespace SFAhri
                     if (SF.Item("NFE").GetValue<bool>())
                     {
                         Game.PrintChat("Casting Q");
-                        Spell_Cast_LineSkillshot("Combo", "useQ", Q, SimpleTs.DamageType.Magical);
+                        //Spell_Cast_LineSkillshot("Combo", "useQ", Q, SimpleTs.DamageType.Magical);
+                        Q.Cast(target, true);
                         Game.PrintChat("Q Casted");
                     }
 
                     else
                     {
                         var pTarget = Prediction.GetBestPosition(target, 0.5f, 100f, 1100f, Player.ServerPosition, 880f, false, Prediction.SkillshotType.SkillshotLine).Position;
-                        Spell_Cast_LineSkillshot("Combo", "useQ", Q, SimpleTs.DamageType.Magical);
+                        //Spell_Cast_LineSkillshot("Combo", "useQ", Q, SimpleTs.DamageType.Magical);
+                        Q.Cast(target, true);
                     }
                     }
                 if (target.IsValidTarget( W.Range) && W.IsReady())
@@ -119,12 +121,13 @@ namespace SFAhri
                     if (SF.Item("NFE").GetValue<bool>())
                     {
                         var pTarget = Prediction.GetBestPosition(target, 0.5f, 60f, 1200f, Player.ServerPosition, 880f, true, Prediction.SkillshotType.SkillshotLine).Position;
-                        Spell_Cast_LineSkillshot("Combo", "useE", E, SimpleTs.DamageType.Magical,"Enemy",true);
+                        //Spell_Cast_LineSkillshot("Combo", "useE", E, SimpleTs.DamageType.Magical,"Enemy",true);
+                        E.Cast(target, true);
                     }
                     else
                     {
                         var pTarget = Prediction.GetBestPosition(target, 0.5f, 60f, 1200f, Player.ServerPosition, 880f, true, Prediction.SkillshotType.SkillshotLine).Position;
-                        Spell_Cast_LineSkillshot("Combo", "useE", E, SimpleTs.DamageType.Magical, "Enemy", true);
+                        E.Cast(target, true);
                     }
                 }
                 
