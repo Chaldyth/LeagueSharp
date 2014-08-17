@@ -52,10 +52,12 @@ namespace SFAhri
             SF.AddSubMenu(ts);
             //Combo menu
             SF.AddSubMenu(new Menu("Combo", "Combo"));
+            SF.SubMenu("Combo").AddItem(new MenuItem("useQ", "Use Q?").SetValue(true));
             SF.SubMenu("Combo").AddItem(new MenuItem("useW", "Use W?").SetValue(true));
+            SF.SubMenu("Combo").AddItem(new MenuItem("useE", "Use E?").SetValue(true));
             SF.AddItem(new MenuItem("ComboActive", "Combo").SetValue(new KeyBind(32, KeyBindType.Press)));
             //Exploits
-            SF.AddItem(new MenuItem("NFE", "No-face exploit").SetValue(true));
+            SF.AddItem(new MenuItem("NFE", "No-Face (Normal cast not implemented)").SetValue(true));
             //Make the menu visible
             SF.AddToMainMenu();
 
@@ -97,13 +99,13 @@ namespace SFAhri
                     if (SF.Item("NFE").GetValue<bool>())
                     {
                         var pTarget = Prediction.GetBestPosition(target, 0.5f, 100f, 1100f, Player.ServerPosition, 880f, false, Prediction.SkillshotType.SkillshotLine).Position;
-                        Q.Cast(pTarget, true);
+                        Spell_Cast_LineSkillshot("Combo", "useQ", Q, SimpleTs.DamageType.Magical);
                     }
 
                     else
                     {
                         var pTarget = Prediction.GetBestPosition(target, 0.5f, 100f, 1100f, Player.ServerPosition, 880f, false, Prediction.SkillshotType.SkillshotLine).Position;
-                        Q.Cast(pTarget, false);
+                        Spell_Cast_LineSkillshot("Combo", "useQ", Q, SimpleTs.DamageType.Magical);
                     }
                     }
                 if (target.IsValidTarget( W.Range) && W.IsReady())
@@ -115,12 +117,12 @@ namespace SFAhri
                     if (SF.Item("NFE").GetValue<bool>())
                     {
                         var pTarget = Prediction.GetBestPosition(target, 0.5f, 60f, 1200f, Player.ServerPosition, 880f, true, Prediction.SkillshotType.SkillshotLine).Position;
-                        E.Cast(pTarget, true);
+                        Spell_Cast_LineSkillshot("Combo", "useE", E, SimpleTs.DamageType.Magical,"Enemy",true);
                     }
                     else
                     {
                         var pTarget = Prediction.GetBestPosition(target, 0.5f, 60f, 1200f, Player.ServerPosition, 880f, true, Prediction.SkillshotType.SkillshotLine).Position;
-                        E.Cast(pTarget, false);
+                        Spell_Cast_LineSkillshot("Combo", "useE", E, SimpleTs.DamageType.Magical, "Enemy", true);
                     }
                 }
                 
@@ -139,6 +141,70 @@ namespace SFAhri
         }
         #endregion
 
+        #region Spellcast
+        //Credits to Lexxes gave me this function to use
+        public static bool Spell_Cast_LineSkillshot(string MainMenu, string Menu, Spell Spell, SimpleTs.DamageType DmgType, string Objekt = "Enemy", bool Condition = true, bool Lasthit = false, DamageLib.StageType Stage = DamageLib.StageType.Default)
+        {
+            
+                if (Objekt == "Enemy")
+                {
+                    var Target = SimpleTs.GetTarget(Spell.Range, DmgType);
+                    if (Target != null)
+                    {
+                        if (Target.IsValidTarget(Spell.Range) && Spell.IsReady())
+                        {
+                            if (Spell.GetPrediction(Target).HitChance >= Prediction.HitChance.HighHitchance)
+                            {
+                                Spell.Cast(Target, true);
+                                
+                                return true;
+                            }
+                        }
+                    }
+                }
+                if (Objekt == "Minion")
+                {
+                    var allMinions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Spell.Range, MinionTypes.All, MinionTeam.NotAlly);
+                    foreach (var Target in allMinions)
+                    {
+                        if (Target != null)
+                        {
+                            var spelltype = DamageLib.SpellType.AD;
+
+                            if (Spell.Slot.ToString() == "Q")
+                                spelltype = DamageLib.SpellType.Q;
+                            if (Spell.Slot.ToString() == "W")
+                                spelltype = DamageLib.SpellType.W;
+                            if (Spell.Slot.ToString() == "E")
+                                spelltype = DamageLib.SpellType.E;
+                            if (Spell.Slot.ToString() == "R")
+                                spelltype = DamageLib.SpellType.R;
+
+                            if (Target.IsValidTarget(Spell.Range) && Spell.IsReady())
+                            {
+                                if ((Lasthit && (DamageLib.getDmg(Target, spelltype, Stage) > Target.Health) || (DamageLib.getDmg(Target, spelltype, Stage) + 100 < Target.Health) && !Lasthit))
+                                {
+                                    Spell.Cast(Target.Position, true);
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (Objekt == "KS")
+                {
+
+                }
+
+            
+            return true;
+        }
+        public static bool Menu_IsMenuActive(string Menu)
+  {
+   return (SF.Item(Menu).GetValue<bool>());
+
+  }
+        #endregion
     }
        
 }
