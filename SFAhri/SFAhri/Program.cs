@@ -64,9 +64,6 @@ namespace SFAhri
 
         static void Game_OnGameUpdate(EventArgs args)
         {
-            if (Player.IsDead) return;
-            Orbwalker.SetAttacks(true);
-            Orbwalker.SetMovement(true);
             if (SF.Item("ComboActive").GetValue<KeyBind>().Active) {
                 Combo();
             }
@@ -80,31 +77,41 @@ namespace SFAhri
         {
             var target = SimpleTs.GetTarget(E.Range, SimpleTs.DamageType.Magical);
             if (target != null) return;
-            if (GetDamage(target) > target.Health)
-            {
-                if (Player.Distance(target) < E.Range && DFG.IsReady())
+            
+                if (target.IsValidTarget(DFG.Range) && DFG.IsReady())
                     DFG.Cast(target);
-                if (Player.Distance(target) < Q.Range && Q.IsReady())
+                if (target.IsValidTarget(Q.Range) && Q.IsReady())
                 {
                     if (SF.Item("NFE").GetValue<bool>())
-                        Q.Cast(target, true, true);
+                    {
+                        var pTarget = Prediction.GetBestPosition(target, 0.5f, 100f, 1100f, Player.ServerPosition, 880f, false, Prediction.SkillshotType.SkillshotLine).Position;
+                        Q.Cast(pTarget, true);
+                    }
+
                     else
                     {
-                        Q.Cast(target,false,true);
+                        var pTarget = Prediction.GetBestPosition(target, 0.5f, 100f, 1100f, Player.ServerPosition, 880f, false, Prediction.SkillshotType.SkillshotLine).Position;
+                        Q.Cast(pTarget, false);
                     }
                     }
-                if (Player.Distance(target) < W.Range && W.IsReady())
+                if (target.IsValidTarget( W.Range) && W.IsReady())
                 {
                     W.Cast();
                 }
-                if (Player.Distance(target) < E.Range & E.IsReady())
+                if (target.IsValidTarget(E.Range) & E.IsReady())
                 {
                     if (SF.Item("NFE").GetValue<bool>())
-                        E.Cast(target, true, false);
+                    {
+                        var pTarget = Prediction.GetBestPosition(target, 0.5f, 60f, 1200f, Player.ServerPosition, 880f, true, Prediction.SkillshotType.SkillshotLine).Position;
+                        E.Cast(pTarget, true);
+                    }
                     else
-                        E.Cast(target, false, false);
+                    {
+                        var pTarget = Prediction.GetBestPosition(target, 0.5f, 60f, 1200f, Player.ServerPosition, 880f, true, Prediction.SkillshotType.SkillshotLine).Position;
+                        E.Cast(pTarget, false);
+                    }
                 }
-                }
+                
             }
         private static double GetDamage(Obj_AI_Base unit) // Credit to TC-Crew and PQMailer for the base of this 
         {
