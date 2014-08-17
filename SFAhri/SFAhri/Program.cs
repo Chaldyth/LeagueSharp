@@ -55,7 +55,7 @@ namespace SFAhri
             SF.SubMenu("Combo").AddItem(new MenuItem("useQ", "Use Q?").SetValue(true));
             SF.SubMenu("Combo").AddItem(new MenuItem("useW", "Use W?").SetValue(true));
             SF.SubMenu("Combo").AddItem(new MenuItem("useE", "Use E?").SetValue(true));
-            SF.AddItem(new MenuItem("ComboActive", "Combo").SetValue(new KeyBind(32, KeyBindType.Press)));
+            SF.SubMenu("Combo").AddItem(new MenuItem("ComboActive", "Combo").SetValue(new KeyBind(32, KeyBindType.Press)));
             //Exploits
             SF.AddItem(new MenuItem("NFE", "No-Face (Normal cast not implemented)").SetValue(true));
             //Make the menu visible
@@ -89,6 +89,7 @@ namespace SFAhri
         #region Combo
         public static void Combo()
         {
+           // Game.PrintChat("Got to COMBO function");
             var target = SimpleTs.GetTarget(E.Range, SimpleTs.DamageType.Magical);
             if (target == null) return;
             
@@ -98,8 +99,9 @@ namespace SFAhri
                 {
                     if (SF.Item("NFE").GetValue<bool>())
                     {
-                        var pTarget = Prediction.GetBestPosition(target, 0.5f, 100f, 1100f, Player.ServerPosition, 880f, false, Prediction.SkillshotType.SkillshotLine).Position;
+                        Game.PrintChat("Casting Q");
                         Spell_Cast_LineSkillshot("Combo", "useQ", Q, SimpleTs.DamageType.Magical);
+                        Game.PrintChat("Q Casted");
                     }
 
                     else
