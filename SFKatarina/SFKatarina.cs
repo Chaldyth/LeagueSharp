@@ -143,9 +143,9 @@ namespace Katarina
                     if (Vector3.Distance(minion.ServerPosition, ObjectManager.Player.ServerPosition) > Orbwalking.GetRealAutoAttackRange(ObjectManager.Player))
                     {
                         if (!Config.Item("QNFE").GetValue<bool>())
-                            Q.CastOnUnit(minion, true);
+                            Q.CastOnUnit(minion, false);
                         else
-                            Packet.C2S.Cast.Encoded(new Packet.C2S.Cast.Struct(minion.NetworkId, SpellSlot.Q)).Send(); // Creds to DETUKS - Taught me how to do it. iMeh too for the starting code.
+                            Q.CastOnUnit(minion, true);
                         return;
                     }
                 }
@@ -165,7 +165,7 @@ namespace Katarina
             var target = SimpleTs.GetTarget(E.Range, SimpleTs.DamageType.Magical);
             if (target == null) return;
 
-            if ((GetDamage(target) > target.Health))
+            if (DamageLib.IsKillable(target, new[] {DamageLib.SpellType.Q, DamageLib.SpellType.W,DamageLib.SpellType.E,DamageLib.SpellType.R,DamageLib.SpellType.DFG}))
             {
                 if (ObjectManager.Player.Distance(target) < E.Range && DFG.IsReady())
                     DFG.Cast(target);
@@ -173,7 +173,7 @@ namespace Katarina
                 if (ObjectManager.Player.Distance(target) < Q.Range && Q.IsReady())
                 {
                     if(!Config.Item("QNFE").GetValue<bool>())
-                    Q.CastOnUnit(target, true);
+                    Q.CastOnUnit(target);
                     else
                         Packet.C2S.Cast.Encoded(new Packet.C2S.Cast.Struct(target.NetworkId, SpellSlot.Q)).Send(); // Creds to DETUKS - Taught me how to do it. iMeh too for the starting code.
                 }
@@ -189,14 +189,14 @@ namespace Katarina
 
 
             }
-            else if (!(GetDamage(target) > target.Health))
+            else
             {
                 if (ObjectManager.Player.Distance(target) < Q.Range && Q.IsReady())
                     Q.CastOnUnit(target, true);
 
                 if (Config.Item("ComboActive").GetValue<KeyBind>().Active &&
                     ObjectManager.Player.Distance(target) < E.Range && E.IsReady())
-                    E.CastOnUnit(target, true);
+                    E.CastOnUnit(target);
 
                 if (ObjectManager.Player.Distance(target) < W.Range && W.IsReady())
                     W.Cast();
@@ -220,9 +220,9 @@ namespace Katarina
                 if (Q.IsReady() && hero.Distance(ObjectManager.Player) <= Q.Range && DamageLib.getDmg(hero, DamageLib.SpellType.Q) >= hero.Health)
                 {
                     if (!Config.Item("QNFE").GetValue<bool>())
-                        Q.CastOnUnit(hero, true);
+                        Q.CastOnUnit(hero, false);
                     else
-                        Packet.C2S.Cast.Encoded(new Packet.C2S.Cast.Struct(hero.NetworkId, SpellSlot.Q)).Send(); // Creds to DETUKS - Taught me how to do it. iMeh too for the starting code.
+                        Q.CastOnUnit(hero, true);// Creds to DETUKS - Taught me how to do it. iMeh too for the starting code.
                 }
             }
         }
