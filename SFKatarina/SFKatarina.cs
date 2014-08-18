@@ -175,7 +175,7 @@ namespace Katarina
                     if(!Config.Item("QNFE").GetValue<bool>())
                     Q.CastOnUnit(target);
                     else
-                        Packet.C2S.Cast.Encoded(new Packet.C2S.Cast.Struct(target.NetworkId, SpellSlot.Q)).Send(); // Creds to DETUKS - Taught me how to do it. iMeh too for the starting code.
+                        Q.CastOnUnit(target,true);
                 }
 
                 if (ObjectManager.Player.Distance(target) < E.Range && E.IsReady() && !Q.IsReady())
