@@ -8,14 +8,14 @@ using LeagueSharp;
 using LeagueSharp.Common;
 using SharpDX;
 using Color = System.Drawing.Color;
-namespace SFTutorial
+namespace SFMasterYi
 {
     class Program
     {
-        public static string ChampName = "Ezreal";
+        public static string ChampName = "MasterYi";
         public static Orbwalking.Orbwalker Orbwalker;
         public static Obj_AI_Base Player = ObjectManager.Player; // Instead of typing ObjectManager.Player you can just type Player
-        public static Spell Q, W, E, R;
+        public static Spell Q,  E, R;
         public static Items.Item DFG;
 
         public static Menu SF;
@@ -28,13 +28,7 @@ namespace SFTutorial
         {
             if (Player.BaseSkinName != ChampName) return;
 
-            Q = new Spell(SpellSlot.Q, 1150);
-            W = new Spell(SpellSlot.W, 1000);
-            E = new Spell(SpellSlot.E, 475);
-            R = new Spell(SpellSlot.R, float.MaxValue);
-
-            Q.SetSkillshot(0.5f, 80f, 1200f, true, Prediction.SkillshotType.SkillshotLine);-
-            W.SetSkillshot(0.5f, 80f, 1200f, false, Prediction.SkillshotType.SkillshotLine);
+            
             //Base menu
             SF = new Menu("SF" + ChampName, ChampName, true);
             //Orbwalker and menu
@@ -51,19 +45,24 @@ namespace SFTutorial
             SF.SubMenu("Combo").AddItem(new MenuItem("useE", "Use E?").SetValue(true));
             SF.SubMenu("Combo").AddItem(new MenuItem("useR", "Use R?").SetValue(true));
             SF.SubMenu("Combo").AddItem(new MenuItem("ComboActive", "Combo").SetValue(new KeyBind(32, KeyBindType.Press)));
-            //Farming menu
-            SF.AddSubMenu(new Menu("Farming", "Farming"));
-            SF.SubMenu("Farming").AddItem(new MenuItem("useQF", "Use Q?").SetValue(true));
-            SF.SubMenu("Farming").AddItem(new MenuItem("FreezeActive", "Freeze lane").SetValue(new KeyBind("C".ToCharArray()[0], KeyBindType.Press)));
+            //Farm
+            SF.AddSubMenu(new Menu("Farm", "Farm"));
+            SF.SubMenu("Farm").AddItem(new MenuItem("WaveClear", "WaveClear").SetValue(new KeyBind("V".ToCharArray()[0], KeyBindType.Press)));
+            SF.SubMenu("Farm").AddItem(new MenuItem("useQW", "Use Q?").SetValue(true));
+            //Jung clear
+            SF.AddSubMenu(new Menu("JFarm", "JFarm"));
+            SF.SubMenu("JFarm").AddItem(new MenuItem("JungClear", "Jungle clear").SetValue(new KeyBind("C".ToCharArray()[0], KeyBindType.Press)));
             //Exploits
             SF.AddItem(new MenuItem("NFE", "No-Face Exploit").SetValue(true));
             //Make the menu visible
             SF.AddToMainMenu();
-
+            Q = new Spell(SpellSlot.Q, 600);
+            E = new Spell(SpellSlot.E, Orbwalking.GetRealAutoAttackRange(Player));
+            R = new Spell(SpellSlot.R, Orbwalking.GetRealAutoAttackRange(Player));
             Drawing.OnDraw += Drawing_OnDraw; // Add onDraw
             Game.OnGameUpdate += Game_OnGameUpdate; // adds OnGameUpdate (Same as onTick in bol)
 
-            Game.PrintChat("SF"+ChampName+" loaded! By iSnorflake");
+            Game.PrintChat("SF" + ChampName + " loaded! By iSnorflake");
         }
 
         static void Game_OnGameUpdate(EventArgs args)
@@ -72,31 +71,48 @@ namespace SFTutorial
             {
                 Combo();
             }
-            if (SF.Item("FreezeActive").GetValue<KeyBind>().Active)
+            if (SF.Item("WaveClear").GetValue<KeyBind>().Active)
             {
-                Farm();
+                Waveclear();
             }
+            
         }
 
         static void Drawing_OnDraw(EventArgs args)
         {
             Utility.DrawCircle(Player.Position, Q.Range, Color.Crimson);
-            Utility.DrawCircle(Player.Position, W.Range, Color.Ivory);
-            Utility.DrawCircle(Player.Position, E.Range, Color.Khaki);
-            Utility.DrawCircle(Player.Position, R.Range, Color.HotPink);
         }
-        public static void Farm()
+        public static void JungleClear()
+        { // leeched off flapperdoodle ty bby
+            dynamic jungleMobs = MinionManager.GetMinions(Player.ServerPosition, 700, MinionTypes.All, MinionTeam.Neutral, MinionOrderTypes.MaxHealth);
+            if (jungleMobs.Count > 0)
+            {
+                if (Q.IsReady())
+                {
+                    Q.Cast(jungleMobs);
+                }
+                if (E.IsReady())
+                {
+                    E.Cast();
+                }
+            }
+        }
+
+        public static void Waveclear()
         {
-            if (!Orbwalking.CanMove(40)) return;
-            var allMinions = MinionManager.GetMinions(Player.ServerPosition, Q.Range);
-            var useQ = SF.Item("useQF").GetValue<bool>();
+            var allMinions = MinionManager.GetMinions(ObjectManager.Player.ServerPosition, Q.Range);
+            var useQ = SF.Item("UseQF").GetValue<bool>(); // From katarina script
 
             if (useQ && Q.IsReady())
             {
-                foreach (var minion in allMinions.Where(minion => minion.IsValidTarget() && HealthPrediction.GetHealthPrediction(minion, (int)(Player.Distance(minion) * 1000 / 1400)) < 0.75 * DamageLib.getDmg(minion, DamageLib.SpellType.Q, DamageLib.StageType.FirstDamage))){
-                    if (Vector3.Distance(minion.ServerPosition, Player.ServerPosition) > Orbwalking.GetRealAutoAttackRange(Player))
+                foreach (var minion in allMinions)
+                {
+                    if (minion != null)
                     {
-                        Q.CastIfHitchanceEquals(minion, Prediction.HitChance.HighHitchance, true);
+                        if (minion.IsValidTarget(Q.Range))
+                        {
+                            Q.Cast(minion, true); // Packet cast because fk u rito
+                        }
                     }
                 }
             }
@@ -106,26 +122,17 @@ namespace SFTutorial
             var target = SimpleTs.GetTarget(Q.Range, SimpleTs.DamageType.Magical);
             if (target == null) return;
 
+            if (target.IsValidTarget(DFG.Range) && DFG.IsReady())
+                DFG.Cast(target);
             if (target.IsValidTarget(Q.Range) && Q.IsReady())
             {
                 if (SF.Item("NFE").GetValue<bool>())
                 {
-                    Q.Cast(target, true); // Packetcasting = true
+                    Q.Cast(target, true);
                 }
                 else
                 {
-                    Q.Cast(target, false); // Packetcasting = false
-                }
-            }
-            if (target.IsValidTarget(W.Range) && W.IsReady())
-            {
-                if (SF.Item("NFE").GetValue<bool>())
-                {
-                    W.Cast(target, true);
-                }
-                else
-                {
-                    W.Cast(target, false);
+                    Q.Cast(target, false);
                 }
             }
             if (target.IsValidTarget(E.Range) && E.IsReady())
@@ -139,20 +146,6 @@ namespace SFTutorial
                     E.Cast(target, false);
                 }
             }
-            if (target.IsValidTarget(R.Range) && R.IsReady())
-            {
-                if (SF.Item("NFE").GetValue<bool>())
-                {
-                    R.Cast(target, true);
-                }
-                else
-                {
-                    R.Cast(target, false);
-                }
-            }
-
-            if (target.IsValidTarget(DFG.Range) && DFG.IsReady())
-                DFG.Cast(target);
         }
     }
 }
